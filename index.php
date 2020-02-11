@@ -1,5 +1,6 @@
 <?php
 require_once ('Db.php');
+require_once ('transformers.php');
 
 class Migration {
 
