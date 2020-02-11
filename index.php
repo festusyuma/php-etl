@@ -33,7 +33,8 @@ class Migration {
             $this->values[$table] = $built_schema['values'];
         }
 
-        $this->migrate();
+        var_dump($this->queries, $this->columns, $this->values);
+//        $this->migrate();
     }
 
     private function buildSchema($migration) {
@@ -121,7 +122,7 @@ $migrations = [
         ['id', 'test_2.id'],
         ['grade', 'test_1.col_one'],
         ['classCode', 'test_2.col_one'],
-        ['remarks', 'test_1.col_two'],
+        ['remarks', 'test_1.col_three'],
     ]
 ];
 
