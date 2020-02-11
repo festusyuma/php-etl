@@ -17,19 +17,47 @@ class Migration {
     }
 
     public function runMigration() {
+        $queries = [];
+        $columns = [];
+        $values = [];
+
         foreach ($this->migrations as $table=>$migration) {
             $old_table = $table;
+            $t_queries = [];
+            $t_columns = [];
+            $t_values = [];
 
             foreach ($migration as $schema) {
-                $old_col = $schema[0];
-                $new_col = explode('.', $schema[1]);
+                $old_column = $schema[0];
+                $new_field = explode('.', $schema[1]);
+                $new_table = $new_field[0];
+                $new_column = $new_field[1];
 
-                $this->regularMigration($old_table, $old_col, $new_col);
+                if (in_array($new_table, array_keys($t_queries))) {
+                    $query = $t_queries[$new_table];
+                    array_push($t_columns[$new_table], $new_column);
+                    array_push($t_values[$new_table], $old_column);
+                } else {
+                    $query = "INSERT INTO $new_table {COLUMNS} VALUES {VALUES}";
+                    $t_queries[$new_table] = $query;
+                    $t_columns[$new_table] = [$new_column];
+                    $t_values[$new_table] = [$old_column];
+                }
             }
+
+            $queries[$old_table] = $t_queries;
+            $columns[$old_table] = $t_columns;
+            $values[$old_table] = $t_values;
         }
+
+        var_dump($queries, $columns, $values);
     }
 
-    private function regularMigration($old_table, $old_column, $new_field) {
+    private function regularMigration() {
+
+    }
+    
+    /*private function regularMigration($old_table, $old_column, $new_field) {
 
         $new_table = $new_field[0];
         $new_column = $new_field[1];
@@ -48,7 +76,7 @@ class Migration {
                 }else $q = "INSERT INTO $new_table  ";
             }
         }
-    }
+    }*/
 }
 
 $migrations = [
