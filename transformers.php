@@ -22,3 +22,7 @@ function schoolCodeToId($schoolCode) {
 
     return false;
 }
+
+function formatGradeName($str) {
+    return ucwords(strtolower($str). " grade");
+}

@@ -2,6 +2,7 @@
 require_once ('Db.php');
 require_once ('transformers.php');
 require_once ('RegularMigration.php');
+require_once ('GeneralizeMigration.php');
 
 class Migration {
 
@@ -15,7 +16,7 @@ class Migration {
 
     public function __construct(){
         $this->old_db = Db::getInstance('sams_db_old');
-        $this->new_db = Db::getInstance('test_etl');
+        $this->new_db = Db::getInstance('sams_db_new');
         $this->queries = $this->columns = $this->values = array();
     }
 
@@ -28,20 +29,14 @@ class Migration {
         foreach ($this->migrations as $table=>$migration) {
 
             if ($migration['type'] == 'GENERALIZE') {
-
+                $migration_obj = new GeneralizeMigration($table, $migration);
+                $migration_obj->migrate();
             }else if ($migration['type'] == 'REGULAR') {
                 $migration_obj = new RegularMigration($table, $migration);
-                $built_schema = $migration_obj->migrate();
-            }
-
-            if (isset($built_schema) && $built_schema != null) {
-                $this->queries[$table] = $built_schema['queries'];
-                $this->columns[$table] = $built_schema['columns'];
-                $this->values[$table] = $built_schema['values'];
+                $migration_obj->migrate();
             }
         }
 
-        var_dump($this->queries, $this->columns, $this->values);
 //        $this->migrate();
     }
 
@@ -99,9 +94,22 @@ class Migration {
 $migrations = [
     'grade' => [
         'migrations' => [
-
+            [['template', 'formatGradeName'], 'grade.name']
         ],
         'type' => 'GENERALIZE',
+        'generalization' => 'template',
+        'relationship' => [
+            ['schoolCode', 'config.']
+        ],
+        'child_migrations' => [
+            'migrations' => [
+                ['gradeType', 'grade_score.name'],
+                ['gradeRemarks', 'grade_score.remarks'],
+                ['minScore', 'grade_score.min_score'],
+                ['maxScore', 'grade_score.max_score'],
+            ],
+            'relationship' => []
+        ],
     ],
     'result' => [
         'migrations' => [
@@ -109,7 +117,7 @@ $migrations = [
             ['id', 'test_2.id'],
             ['grade', 'test_1.col_one'],
             ['classCode', 'test_2.col_one'],
-            ['remarks', 'test_1.col_three'],
+            [['remarks', 'toUpperCase'], 'test_1.col_three'],
         ],
         'type' => 'REGULAR',
     ],

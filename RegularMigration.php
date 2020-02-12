@@ -19,7 +19,6 @@ class RegularMigration{
     public function migrate() {
 
         $this->buildSchema();
-        var_dump($this->queries, $this->columns, $this->values);
 
         return true;
     }
@@ -28,7 +27,7 @@ class RegularMigration{
 
         foreach ($this->migrations['migrations'] as $schema) {
             $old_column = $schema[0];
-            $new_field = explode('.', $schema[1]);
+            $new_field = explode('.', $schema[1], 2);
             $new_table = $new_field[0];
             $new_column = $new_field[1];
 
