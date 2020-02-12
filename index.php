@@ -113,7 +113,10 @@ $migrations = [
             'relationship' => [
                 'type' => 'external',
                 'table' => 'grade_score',
-
+                'field' => [
+                    ['id', 'grade_grade_score.grade_id'],
+                    ['id', 'grade_grade_score.grade_id']
+                ],
             ]
         ],
     ],
