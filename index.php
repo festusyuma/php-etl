@@ -31,7 +31,7 @@ class Migration {
 
             }else if ($migration['type'] == 'REGULAR') {
                 $migration_obj = new RegularMigration($table, $migration);
-                $built_schema = $migration_obj->buildSchema();
+                $built_schema = $migration_obj->migrate();
             }
 
             if (isset($built_schema) && $built_schema != null) {
