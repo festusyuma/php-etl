@@ -31,19 +31,16 @@ class GeneralizeMigration{
     public function buildSchema() {
 
         foreach ($this->migrations['migrations'] as $migration) {
-            $old_column = $migration[0];
-            $new_field = explode('.', $migration[1], 2);
+            $schema = $this->getMigrationSchema($migration);
 
-            if (in_array($new_field[0], array_keys($this->schema))) {
-
+            if (in_array($schema['table'], array_keys($this->schema))) {
+                $this->schema[$schema['table']]['columns'][] = $schema['column'];
+                $this->schema[$schema['table']]['values'][] = $schema['value'];
             }else {
-                $query = "INSERT INTO {$new_field[0]} {COLUMNS} VALUES {VALUES}";
-                $column = $new_field[1];
-
-                $this->schema[$new_field[0]] = [
-                    'queries' => [$query],
-                    'columns' => [$column],
-                    'value' => $old_column
+                $this->schema[$schema['table']] = [
+                    'queries' => [$schema['query']],
+                    'columns' => [$schema['column']],
+                    'values' => [$schema['value']]
                 ];
             }
         }
