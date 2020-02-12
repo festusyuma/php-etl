@@ -1,6 +1,7 @@
 <?php
 require_once ('Db.php');
 require_once ('transformers.php');
+require_once ('RegularMigration.php');
 
 class Migration {
 
@@ -26,43 +27,22 @@ class Migration {
 
         foreach ($this->migrations as $table=>$migration) {
 
-            $built_schema = $this->buildSchema($migration);
+            if ($migration['type'] == 'GENERALIZE') {
 
-            $this->queries[$table] = $built_schema['queries'];
-            $this->columns[$table] = $built_schema['columns'];
-            $this->values[$table] = $built_schema['values'];
+            }else if ($migration['type'] == 'REGULAR') {
+                $migration_obj = new RegularMigration($table, $migration);
+                $built_schema = $migration_obj->buildSchema();
+            }
+
+            if (isset($built_schema) && $built_schema != null) {
+                $this->queries[$table] = $built_schema['queries'];
+                $this->columns[$table] = $built_schema['columns'];
+                $this->values[$table] = $built_schema['values'];
+            }
         }
 
         var_dump($this->queries, $this->columns, $this->values);
 //        $this->migrate();
-    }
-
-    private function buildSchema($migration) {
-        $queries = [];
-        $columns = [];
-        $values = [];
-
-        foreach ($migration as $schema) {
-            $old_column = $schema[0];
-            $new_field = explode('.', $schema[1]);
-            $new_table = $new_field[0];
-            $new_column = $new_field[1];
-
-            if (in_array($new_table, array_keys($queries))) {
-                array_push($columns[$new_table], $new_column);
-                array_push($values[$new_table], $old_column);
-            } else {
-                $queries[$new_table] = "INSERT INTO $new_table {COLUMNS} VALUES {VALUES}";
-                $columns[$new_table] = [$new_column];
-                $values[$new_table] = [$old_column];
-            }
-        }
-
-        return [
-            'queries' => $queries,
-            'columns' => $columns,
-            'values' => $values,
-        ];
     }
 
     private function migrate() {
@@ -117,13 +97,22 @@ class Migration {
 }
 
 $migrations = [
+    'grade' => [
+        'migrations' => [
+
+        ],
+        'type' => 'GENERALIZE',
+    ],
     'result' => [
-        ['id', 'test_1.id'],
-        ['id', 'test_2.id'],
-        ['grade', 'test_1.col_one'],
-        ['classCode', 'test_2.col_one'],
-        ['remarks', 'test_1.col_three'],
-    ]
+        'migrations' => [
+            ['id', 'test_1.id'],
+            ['id', 'test_2.id'],
+            ['grade', 'test_1.col_one'],
+            ['classCode', 'test_2.col_one'],
+            ['remarks', 'test_1.col_three'],
+        ],
+        'type' => 'REGULAR',
+    ],
 ];
 
 $migration = new Migration();
