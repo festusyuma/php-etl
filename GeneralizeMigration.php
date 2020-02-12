@@ -79,12 +79,12 @@ class GeneralizeMigration{
 
     private function getGeneralizationValues() {
         $db = Db::getInstance('sams_db_old');
-        $generalization = $this->migrations['generalization'];
+        $generalization = implode(", ", $this->migrations['generalization']);
         $query = $db->query("SELECT DISTINCT {$generalization} FROM grade");
         $this->saved_data['generalization_values'] = array();
 
         foreach ($query->fetch_all(1) as $g_type) {
-            $this->saved_data['generalization_values'][] = $g_type[$generalization];
+            $this->saved_data['generalization_values'][] = $g_type;
         }
 
         $this->saved_data['generalization_query'] = "SELECT * FROM {$this->table} WHERE {$generalization}={VALUE}";

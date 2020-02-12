@@ -97,7 +97,7 @@ $migrations = [
             [['template', 'formatGradeName'], 'grade.name']
         ],
         'type' => 'GENERALIZE',
-        'generalization' => 'template',
+        'generalization' => ['template', 'schoolCode'],
         'relationship' => [
             ['schoolCode', 'config.']
         ],
@@ -108,7 +108,7 @@ $migrations = [
                 ['minScore', 'grade_score.min_score'],
                 ['maxScore', 'grade_score.max_score'],
             ],
-            'relationship' => []
+            'relationship' => ['EXTERNAL', ]
         ],
     ],
     'result' => [
