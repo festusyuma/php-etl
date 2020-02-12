@@ -10,9 +10,14 @@ class GeneralizeMigration{
     private $childSchema;
     private $saved_data;
 
+    private $old_db;
+    private $new_db;
+
     public function __construct($table, $migrations){
         $this->migrations = $migrations;
         $this->table = $table;
+        $this->old_db = Db::getInstance('sams_db_old');
+        $this->new_db = Db::getInstance('sams_db_new');
 
         $this->schema = $this->childSchema = $this->saved_data = array();
     }
@@ -22,17 +27,16 @@ class GeneralizeMigration{
         $this->getGeneralizationValues();
         $this->buildSchema();
         $this->buildChildSchema();
-
-        $old_db = Db::getInstance('sams_db_old');
-        $new_db = Db::getInstance('sams_db_new');
+        $total = 0;
 
         foreach ($this->saved_data['generalization_values'] as $generalization) {
             $query = $this->saved_data['generalization_query'];
             $query = str_replace('{VALUE}', $this->generalizationToString($generalization), $query);
-            $children = $old_db->query($query);
+            $children = $this->old_db->query($query);
 
             if ($children) {
                 $children = $children->fetch_all(1);
+                $this->saved_data['children'] = $children;
                 $temp_parent = $children[0];
 
                 foreach ($this->schema as $schema) {
@@ -40,28 +44,33 @@ class GeneralizeMigration{
 
                     if ($parent) {
                         $this->saved_data['parent'] = $parent;
-
+                        $this->migrateChildren();
                     }
-                    die();
                 }
             }
         }
     }
 
     public function migrateParent($temp_parent, $schema) {
-        $new_db = Db::getInstance('sams_db_new');
-
         $query = $schema['query'];
         $query = str_replace('{COLUMNS}', $this->getColumns($schema['columns']), $query);
         $query = str_replace('{VALUES}', $this->getValues($temp_parent, $schema['values']), $query);
 
-        if ($new_db->query($query)) {
-            return $new_db->query("SELECT * FROM {$schema['table']} WHERE `id` = {$new_db->insert_id}")->fetch_assoc();
+        if ($this->new_db->query($query)) {
+            return $this->new_db->query("SELECT * FROM {$schema['table']} WHERE `id` = {$this->new_db->insert_id}")->fetch_assoc();
         }else return false;
     }
 
     public function migrateChildren() {
+        foreach ($this->saved_data['children'] as $child) {
+            foreach ($this->childSchema as $schema) {
+                $query = $schema['query'];
+                $query = str_replace('{COLUMNS}', $this->getColumns($schema['columns']), $query);
+                $query = str_replace('{VALUES}', $this->getValues($child, $schema['values']), $query);
 
+                $this->new_db->query($query);
+            }
+        }
     }
 
     private function buildSchema() {
@@ -152,7 +161,7 @@ class GeneralizeMigration{
             if (is_array($value)) {
                 $temp_val = $data[$value[0]];
                 $temp_val = $value[1]($temp_val);
-            } else $temp_val = $value;
+            } else $temp_val = $data[$value];
 
             $val[] = $temp_val;
         }
@@ -164,6 +173,6 @@ class GeneralizeMigration{
     }
 
     private function stringify($val) {
-        return ($val == '') ? null : "'".$val."'";
+        return ($val == '') ? 'null' : "'".$val."'";
     }
 }
