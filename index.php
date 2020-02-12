@@ -94,7 +94,9 @@ class Migration {
 $migrations = [
     'grade' => [
         'migrations' => [
-            [['template', 'formatGradeName'], 'grade.name']
+            [['template', 'formatGradeName'], 'grade.name'],
+            [['schoolCode', 'schoolCodeToId'], 'grade.sid'],
+            [['schoolCode', 'schoolCodeToId'], 'grade_score.sid'],
         ],
         'type' => 'GENERALIZE',
         'generalization' => ['template', 'schoolCode'],
@@ -107,8 +109,13 @@ $migrations = [
                 ['gradeRemarks', 'grade_score.remarks'],
                 ['minScore', 'grade_score.min_score'],
                 ['maxScore', 'grade_score.max_score'],
+                ['schoolCode', 'grade_score.sid'],
             ],
-            'relationship' => ['EXTERNAL', ]
+            'relationship' => [
+                'type' => 'external',
+                'table' => 'grade_score',
+
+            ]
         ],
     ],
     'result' => [

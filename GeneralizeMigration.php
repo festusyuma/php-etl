@@ -23,12 +23,48 @@ class GeneralizeMigration{
         $this->buildSchema();
         $this->buildChildSchema();
 
-        var_dump($this->saved_data);
-        var_dump($this->schema);
-        var_dump($this->childSchema);
+        $old_db = Db::getInstance('sams_db_old');
+        $new_db = Db::getInstance('sams_db_new');
+
+        foreach ($this->saved_data['generalization_values'] as $generalization) {
+            $query = $this->saved_data['generalization_query'];
+            $query = str_replace('{VALUE}', $this->generalizationToString($generalization), $query);
+            $children = $old_db->query($query);
+
+            if ($children) {
+                $children = $children->fetch_all(1);
+                $temp_parent = $children[0];
+
+                foreach ($this->schema as $schema) {
+                    $parent = $this->migrateParent($temp_parent, $schema);
+
+                    if ($parent) {
+                        $this->saved_data['parent'] = $parent;
+
+                    }
+                    die();
+                }
+            }
+        }
     }
 
-    public function buildSchema() {
+    public function migrateParent($temp_parent, $schema) {
+        $new_db = Db::getInstance('sams_db_new');
+
+        $query = $schema['query'];
+        $query = str_replace('{COLUMNS}', $this->getColumns($schema['columns']), $query);
+        $query = str_replace('{VALUES}', $this->getValues($temp_parent, $schema['values']), $query);
+
+        if ($new_db->query($query)) {
+            return $new_db->query("SELECT * FROM {$schema['table']} WHERE `id` = {$new_db->insert_id}")->fetch_assoc();
+        }else return false;
+    }
+
+    public function migrateChildren() {
+
+    }
+
+    private function buildSchema() {
 
         foreach ($this->migrations['migrations'] as $migration) {
             $schema = $this->getMigrationSchema($migration);
@@ -38,7 +74,8 @@ class GeneralizeMigration{
                 $this->schema[$schema['table']]['values'][] = $schema['value'];
             }else {
                 $this->schema[$schema['table']] = [
-                    'queries' => [$schema['query']],
+                    'table' => $schema['table'],
+                    'query' => $schema['query'],
                     'columns' => [$schema['column']],
                     'values' => [$schema['value']]
                 ];
@@ -47,7 +84,7 @@ class GeneralizeMigration{
 
     }
 
-    function buildChildSchema() {
+    private function buildChildSchema() {
 
         foreach ($this->migrations['child_migrations']['migrations'] as $migration) {
             $schema = $this->getMigrationSchema($migration);
@@ -57,7 +94,8 @@ class GeneralizeMigration{
                 $this->childSchema[$schema['table']]['values'][] = $schema['value'];
             }else {
                 $this->childSchema[$schema['table']] = [
-                    'queries' => [$schema['query']],
+                    'table' => $schema['table'],
+                    'query' => $schema['query'],
                     'columns' => [$schema['column']],
                     'values' => [$schema['value']]
                 ];
@@ -80,13 +118,52 @@ class GeneralizeMigration{
     private function getGeneralizationValues() {
         $db = Db::getInstance('sams_db_old');
         $generalization = implode(", ", $this->migrations['generalization']);
-        $query = $db->query("SELECT DISTINCT {$generalization} FROM grade");
+        $query = $db->query("SELECT DISTINCT {$generalization} FROM {$this->table}");
         $this->saved_data['generalization_values'] = array();
 
         foreach ($query->fetch_all(1) as $g_type) {
             $this->saved_data['generalization_values'][] = $g_type;
         }
 
-        $this->saved_data['generalization_query'] = "SELECT * FROM {$this->table} WHERE {$generalization}={VALUE}";
+        $this->saved_data['generalization_query'] = "SELECT * FROM {$this->table} WHERE {VALUE}";
+    }
+
+    private function generalizationToString($generalization) {
+        $generalizations = [];
+
+        foreach ($generalization as $col=>$val) {
+            if ($val == '') $val = null; else $val = "'${val}'";
+            $generalizations[] = "{$col} = {$val}";
+        }
+
+        return implode(' AND ', $generalizations);
+    }
+
+    private function getColumns($columns) {
+        $columns_string = implode(', ', $columns);
+        return "($columns_string)";
+    }
+
+    private function getValues($data, $values) {
+        $val = [];
+
+        foreach ($values as $value) {
+
+            if (is_array($value)) {
+                $temp_val = $data[$value[0]];
+                $temp_val = $value[1]($temp_val);
+            } else $temp_val = $value;
+
+            $val[] = $temp_val;
+        }
+
+        $val = (array_map([$this, 'stringify'], $val));
+        $val_string = implode(', ', $val);
+
+        return "($val_string)";
+    }
+
+    private function stringify($val) {
+        return ($val == '') ? null : "'".$val."'";
     }
 }

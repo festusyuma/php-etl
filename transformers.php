@@ -14,7 +14,7 @@ function schoolIdToCode($id) {
 
 function schoolCodeToId($schoolCode) {
     $db = Db::getInstance('sams_db_old');
-    $school = $db->query("SELECT * FROM school WHERE schoolCode=$schoolCode");
+    $school = $db->query("SELECT * FROM school WHERE schoolCode='{$schoolCode}'");
 
     if ($school) {
         return $school->fetch_assoc()['schoolId'];
