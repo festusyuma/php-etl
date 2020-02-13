@@ -112,23 +112,13 @@ $migrations = [
             ],
             'relationship' => [
                 'type' => 'external',
-                'table' => 'grade_score',
+                'table' => 'grade_grade_scores',
                 'field' => [
-                    ['id', 'grade_grade_score.grade_id'],
-                    ['id', 'grade_grade_score.grade_id']
+                    ['id', 'grade_id'],
+                    ['id', 'grade_scores_id']
                 ],
             ]
         ],
-    ],
-    'result' => [
-        'migrations' => [
-            ['id', 'test_1.id'],
-            ['id', 'test_2.id'],
-            ['grade', 'test_1.col_one'],
-            ['classCode', 'test_2.col_one'],
-            [['remarks', 'toUpperCase'], 'test_1.col_three'],
-        ],
-        'type' => 'REGULAR',
     ],
 ];
 

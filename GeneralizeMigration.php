@@ -8,6 +8,7 @@ class GeneralizeMigration{
 
     private $schema;
     private $childSchema;
+    private $childRelationshipSchema;
     private $saved_data;
 
     private $old_db;
@@ -27,6 +28,9 @@ class GeneralizeMigration{
         $this->getGeneralizationValues();
         $this->buildSchema();
         $this->buildChildSchema();
+        $this->buildChildRelationshipSchema();
+
+        die();
 
         foreach ($this->saved_data['generalization_values'] as $generalization) {
             $query = $this->saved_data['generalization_query'];
@@ -69,7 +73,13 @@ class GeneralizeMigration{
 
                 $this->new_db->query($query);
             }
+
+
         }
+    }
+
+    public function migrateChildRelationship() {
+
     }
 
     private function buildSchema() {
@@ -108,6 +118,30 @@ class GeneralizeMigration{
                     'values' => [$schema['value']]
                 ];
             }
+        }
+    }
+
+    private function buildChildRelationshipSchema($child = null) {
+        $relationship = $this->migrations['child_migrations']['relationship'];
+
+        if ($relationship['type'] == 'external') {
+            $table = $relationship['table'];
+            $parent_rel_field = $relationship['field'][0];
+            $child_rel_field = $relationship['field'][1];
+
+            $this->childRelationshipSchema = [
+                'query' => "INSERT INTO {$table} ({$parent_rel_field[1]}, {$child_rel_field[1]}) VALUES {VALUES}",
+                'values' => [
+                    $parent_rel_field[0],
+                    $child_rel_field[0],
+                ],
+            ];
+        }else {
+            $table = $child['table'];
+            $field = $relationship['field'][0];
+            $query = "UPDATE {$table} SET {$field[1]} = {VALUE} WHERE id = {$child['id']}";
+
+            //todo implement same table relationship
         }
     }
 
