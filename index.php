@@ -36,62 +36,21 @@ class Migration {
                 $migration_obj->migrate();
             }
         }
-
-//        $this->migrate();
-    }
-
-    private function migrate() {
-        $tables = array_keys($this->migrations);
-
-        foreach ($tables as $table) {
-            $data = $this->old_db->query("SELECT * FROM $table")->fetch_all(1);
-            $queries = $this->queries[$table];
-            $columns = $this->columns[$table];
-            $values = $this->values[$table];
-
-            foreach ($data as $row) {
-                foreach ($queries as $t => $query) {
-                    $this->runQuery($row, $query, $columns[$t], $values[$t]);
-                }
-            }
-        }
-    }
-
-    private function runQuery($data, $query, $columns, $values) {
-
-        $columns = $this->getColumns($columns);
-        $values = $this->getValues($data, $values);
-
-        $query = str_replace('{COLUMNS}', $columns, $query);
-        $query = str_replace('{VALUES}', $values, $query);
-
-        $this->new_db->query($query);
-    }
-
-    private function getColumns($columns) {
-        $columns_string = implode(', ', $columns);
-        return "($columns_string)";
-    }
-
-    private function getValues($data, $values) {
-        $val = [];
-
-        foreach ($values as $value) {
-            $val[] = $data[$value];
-        }
-
-        $val = (array_map([$this, 'stringify'], $val));
-        $val_string = implode(', ', $val);
-
-        return "($val_string)";
-    }
-
-    private function stringify($val) {
-        return "'".$val."'";
     }
 }
 
-$migrations = [
+$migration = [
+    'config' => [
+        'table' => 'assessment_type',
+        'migrations' => [
+            ['school_schoolId', 'sid'],
+            ['template', 'name'],
+            ['totalMaxScore', 'total_score']
+        ]
+    ],
+];
+
+$migrations_batch = [
     'grade' => [
         'table' => 'grade',
         'migrations' => [
