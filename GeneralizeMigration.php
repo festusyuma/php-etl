@@ -27,7 +27,6 @@ class GeneralizeMigration{
         $this->getGeneralizationValues();
         $this->buildSchema();
         $this->buildChildSchema();
-        $total = 0;
 
         foreach ($this->saved_data['generalization_values'] as $generalization) {
             $query = $this->saved_data['generalization_query'];
