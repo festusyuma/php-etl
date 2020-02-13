@@ -25,7 +25,7 @@ class RegularMigration extends CommonMigration {
                 $this->saved_data['parent'] = $parent->fetch_assoc();
 
                 foreach ($this->migrations['after'] as $table => $migration) {
-                    var_dump($this->migrateAfter($table, $migration['migration'], $this->saved_data['parent']));
+                    var_dump($this->migrateAfter($table, $migration['migration'], $data));
                     die();
                 }
             }
