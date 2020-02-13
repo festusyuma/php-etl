@@ -1,6 +1,7 @@
 <?php
 require_once ('Db.php');
 require_once ('transformers.php');
+require_once ('CommonMigration.php');
 require_once ('RegularMigration.php');
 require_once ('GeneralizeMigration.php');
 
@@ -30,25 +31,14 @@ class Migration {
 
             if ($migration['type'] == 'GENERALIZE') {
                 $migration_obj = new GeneralizeMigration($table, $migration);
-                $migration_obj->migrate();
+                $migration_obj->normalMigrate();
             }else if ($migration['type'] == 'REGULAR') {
                 $migration_obj = new RegularMigration($table, $migration);
-                $migration_obj->migrate();
+                $migration_obj->normalMigrate();
             }
         }
     }
 }
-
-$migration = [
-    'config' => [
-        'table' => 'assessment_type',
-        'migrations' => [
-            ['school_schoolId', 'sid'],
-            ['template', 'name'],
-            ['totalMaxScore', 'total_score']
-        ]
-    ],
-];
 
 $migrations_batch = [
     'grade' => [
@@ -83,6 +73,30 @@ $migrations_batch = [
     ],
 ];
 
+$migrations = [
+    'config' => [
+        'table' => 'assessment_type',
+        'migrations' => [
+            ['school_schoolId', 'sid'],
+            ['template', 'name'],
+            ['totalMaxScore', 'total_score'],
+        ],
+        'type' => 'REGULAR',
+        'after' => [
+            [
+                'migration' => $migrations_batch['grade'],
+                'relationship' => [
+                    'type' => 'internal',
+                    'table' => 'assessment_type',
+                    'field' => [
+                        ['id', 'grade_id'],
+                    ],
+                ]
+            ]
+        ]
+    ],
+];
+
 $migration = new Migration();
-$migration->setMigration($migrations);
+    $migration->setMigration($migrations);
 $migration->runMigration();

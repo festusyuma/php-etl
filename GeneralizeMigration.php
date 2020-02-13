@@ -1,29 +1,17 @@
 <?php
-
-
-class GeneralizeMigration{
-
-    private $migrations;
-    private $table;
+class GeneralizeMigration extends CommonMigration {
 
     private $schema;
     private $childSchema;
     private $childRelationshipSchema;
     private $saved_data;
 
-    private $old_db;
-    private $new_db;
-
     public function __construct($table, $migrations){
-        $this->migrations = $migrations;
-        $this->table = $table;
-        $this->old_db = Db::getInstance('sams_db_old');
-        $this->new_db = Db::getInstance('sams_db_new');
-
         $this->schema = $this->childSchema = $this->saved_data = array();
+        parent::__construct($table, $migrations);
     }
 
-    public function migrate() {
+    public function normalMigrate() {
 
         $this->getGeneralizationValues();
         $this->buildSchema();
@@ -33,21 +21,39 @@ class GeneralizeMigration{
         foreach ($this->saved_data['generalization_values'] as $generalization) {
             $query = $this->saved_data['generalization_query'];
             $query = str_replace('{VALUE}', $this->generalizationToString($generalization), $query);
-            $children = $this->old_db->query($query);
+            $this->migrate($query);
+        }
+    }
 
-            if ($children) {
-                $children = $children->fetch_all(1);
-                $this->saved_data['children'] = $children;
-                $temp_parent = $children[0];
+    public function migrateAsBatch($data) {
 
-                $parent = $this->migrateParent($temp_parent, $this->schema);
+        $this->buildSchema();
+        $this->buildChildSchema();
+        $this->buildChildRelationshipSchema();
 
-                if ($parent) {
-                    $this->saved_data['parent'] = $parent;
-                    $this->migrateChildren();
-                }
+        var_dump($data);
+        $query = "SELECT * FROM {$this->table} WHERE {$this->generalizationToString($data)}";
+        return $this->migrate($query);
+    }
+
+    public function migrate($query) {
+        $children = $this->old_db->query($query);
+
+        if ($children) {
+            $children = $children->fetch_all(1);
+            $this->saved_data['children'] = $children;
+            $temp_parent = $children[0];
+
+            $parent = $this->migrateParent($temp_parent, $this->schema);
+
+            if ($parent) {
+                $this->saved_data['parent'] = $parent;
+                $this->migrateChildren();
+                return $parent;
             }
         }
+
+        return null;
     }
 
     public function migrateParent($temp_parent, $schema) {
@@ -177,33 +183,5 @@ class GeneralizeMigration{
         }
 
         return implode(' AND ', $generalizations);
-    }
-
-    private function getColumns($columns) {
-        $columns_string = implode(', ', $columns);
-        return "($columns_string)";
-    }
-
-    private function getValues($data, $values) {
-        $val = [];
-
-        foreach ($values as $value) {
-
-            if (is_array($value)) {
-                $temp_val = $data[$value[0]];
-                $temp_val = $value[1]($temp_val);
-            } else $temp_val = $data[$value];
-
-            $val[] = $temp_val;
-        }
-
-        $val = (array_map([$this, 'stringify'], $val));
-        $val_string = implode(', ', $val);
-
-        return "($val_string)";
-    }
-
-    private function stringify($val) {
-        return ($val == '') ? 'null' : "'".$val."'";
     }
 }

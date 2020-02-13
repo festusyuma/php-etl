@@ -1,44 +1,63 @@
 <?php
-class RegularMigration{
+class RegularMigration extends CommonMigration {
 
-    private $migrations;
-    private $table;
-
-    private $queries;
-    private $columns;
-    private $values;
+    private $schema;
     private $saved_data;
 
     public function __construct($table, $migrations){
-        $this->migrations = $migrations;
-        $this->table = $table;
-
-        $this->queries = $this->columns = $this->values = $this->saved_data = array();
+        parent::__construct($table, $migrations);
     }
 
-    public function migrate() {
+    public function normalMigrate() {
 
         $this->buildSchema();
+        $this->setData();
+        $schema = $this->schema;
 
-        return true;
+        foreach ($this->saved_data['data'] as $data) {
+            $query = $schema['query'];
+            $query = str_replace('{COLUMNS}', $this->getColumns($schema['columns']), $query);
+            $query = str_replace('{VALUES}', $this->getValues($data, $schema['values']), $query);
+
+            $parent = $this->new_db->query($query);
+            if ($parent) {
+                $parent = $this->new_db->query("SELECT * FROM {$schema['table']} WHERE id={$this->new_db->insert_id}");
+                $this->saved_data['parent'] = $parent->fetch_assoc();
+
+                foreach ($this->migrations['after'] as $table => $migration) {
+                    var_dump($this->migrateAfter($table, $migration['migration'], $this->saved_data['parent']));
+                    die();
+                }
+            }
+        }
+    }
+
+    public function migrateAsBatch($data) {
+
+    }
+
+    private function setData() {
+        $query = "SELECT * FROM {$this->table}";
+        $data = $this->old_db->query($query);
+
+        if ($data) {
+            $this->saved_data['data'] = $data->fetch_all(1);
+        }
     }
 
     private function buildSchema() {
 
-        foreach ($this->migrations['migrations'] as $schema) {
-            $old_column = $schema[0];
-            $new_field = explode('.', $schema[1], 2);
-            $new_table = $new_field[0];
-            $new_column = $new_field[1];
+        $table = $this->migrations['table'];
+        $this->schema = [
+            'table' => $table,
+            'query' => "INSERT INTO {$table} {COLUMNS} VALUES {VALUES}",
+            'columns' => [],
+            'values' => [],
+        ];
 
-            if (in_array($new_table, array_keys($this->queries))) {
-                array_push($this->columns[$new_table], $new_column);
-                array_push($this->values[$new_table], $old_column);
-            } else {
-                $this->queries[$new_table] = "INSERT INTO $new_table {COLUMNS} VALUES {VALUES}";
-                $this->columns[$new_table] = [$new_column];
-                $this->values[$new_table] = [$old_column];
-            }
+        foreach ($this->migrations['migrations'] as $schema) {
+            $this->schema['columns'][] = $schema[1];
+            $this->schema['values'][] = $schema[0];
         }
     }
 }
