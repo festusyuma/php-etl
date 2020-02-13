@@ -30,8 +30,6 @@ class GeneralizeMigration{
         $this->buildChildSchema();
         $this->buildChildRelationshipSchema();
 
-        die();
-
         foreach ($this->saved_data['generalization_values'] as $generalization) {
             $query = $this->saved_data['generalization_query'];
             $query = str_replace('{VALUE}', $this->generalizationToString($generalization), $query);
@@ -42,13 +40,11 @@ class GeneralizeMigration{
                 $this->saved_data['children'] = $children;
                 $temp_parent = $children[0];
 
-                foreach ($this->schema as $schema) {
-                    $parent = $this->migrateParent($temp_parent, $schema);
+                $parent = $this->migrateParent($temp_parent, $this->schema);
 
-                    if ($parent) {
-                        $this->saved_data['parent'] = $parent;
-                        $this->migrateChildren();
-                    }
+                if ($parent) {
+                    $this->saved_data['parent'] = $parent;
+                    $this->migrateChildren();
                 }
             }
         }
@@ -66,58 +62,61 @@ class GeneralizeMigration{
 
     public function migrateChildren() {
         foreach ($this->saved_data['children'] as $child) {
-            foreach ($this->childSchema as $schema) {
-                $query = $schema['query'];
-                $query = str_replace('{COLUMNS}', $this->getColumns($schema['columns']), $query);
-                $query = str_replace('{VALUES}', $this->getValues($child, $schema['values']), $query);
+            $schema = $this->childSchema;
 
-                $this->new_db->query($query);
-            }
+            $query = $schema['query'];
+            $query = str_replace('{COLUMNS}', $this->getColumns($schema['columns']), $query);
+            $query = str_replace('{VALUES}', $this->getValues($child, $schema['values']), $query);
 
-
+            $this->new_db->query($query);
+            $child_data = $this->new_db->query("SELECT * FROM {$schema['table']} WHERE id={$this->new_db->insert_id}");
+            if ($child_data) $this->migrateChildRelationship($child_data->fetch_assoc());
         }
     }
 
-    public function migrateChildRelationship() {
+    public function migrateChildRelationship($child) {
+        $query = $this->childRelationshipSchema['query'];
+        $parent_key = $this->childRelationshipSchema['values'][0];
+        $child_key = $this->childRelationshipSchema['values'][0];
 
+        $query = str_replace('{VALUES}', "('{$this->saved_data['parent'][$parent_key]}', '{$child[$child_key]}')", $query);
+        $this->new_db->query($query);
     }
 
     private function buildSchema() {
+        $table = $this->migrations['table'];
+
+        $this->schema = [
+            'table' => $table,
+            'query' => "INSERT INTO {$table} {COLUMNS} VALUES {VALUES}",
+            'columns' => [],
+            'values' => []
+        ];
 
         foreach ($this->migrations['migrations'] as $migration) {
-            $schema = $this->getMigrationSchema($migration);
+            $schema = $this->getMigrationSchema($migration, $table);
 
-            if (in_array($schema['table'], array_keys($this->schema))) {
-                $this->schema[$schema['table']]['columns'][] = $schema['column'];
-                $this->schema[$schema['table']]['values'][] = $schema['value'];
-            }else {
-                $this->schema[$schema['table']] = [
-                    'table' => $schema['table'],
-                    'query' => $schema['query'],
-                    'columns' => [$schema['column']],
-                    'values' => [$schema['value']]
-                ];
-            }
+            $this->schema['columns'][] = $schema['column'];
+            $this->schema['values'][] = $schema['value'];
         }
 
     }
 
     private function buildChildSchema() {
 
-        foreach ($this->migrations['child_migrations']['migrations'] as $migration) {
-            $schema = $this->getMigrationSchema($migration);
+        $table = $this->migrations['child_migrations']['table'];
+        $this->childSchema = [
+            'table' => $table,
+            'query' => "INSERT INTO {$table} {COLUMNS} VALUES {VALUES}",
+            'columns' => [],
+            'values' => []
+        ];
 
-            if (in_array($schema['table'], array_keys($this->childSchema))) {
-                $this->childSchema[$schema['table']]['columns'][] = $schema['column'];
-                $this->childSchema[$schema['table']]['values'][] = $schema['value'];
-            }else {
-                $this->childSchema[$schema['table']] = [
-                    'table' => $schema['table'],
-                    'query' => $schema['query'],
-                    'columns' => [$schema['column']],
-                    'values' => [$schema['value']]
-                ];
-            }
+        foreach ($this->migrations['child_migrations']['migrations'] as $migration) {
+            $schema = $this->getMigrationSchema($migration, $table);
+
+            $this->childSchema['columns'][] = $schema['column'];
+            $this->childSchema['values'][] = $schema['value'];
         }
     }
 
@@ -145,14 +144,13 @@ class GeneralizeMigration{
         }
     }
 
-    private function getMigrationSchema($migration) {
+    private function getMigrationSchema($migration, $table) {
         $old_column = $migration[0];
-        $new_field = explode('.', $migration[1], 2);
+        $new_field = $migration[1];
 
         return [
-            'table' => $new_field[0],
-            'query' => "INSERT INTO {$new_field[0]} {COLUMNS} VALUES {VALUES}",
-            'column' => $new_field[1],
+            'query' => "INSERT INTO {$table} {COLUMNS} VALUES {VALUES}",
+            'column' => $new_field,
             'value' => $old_column
         ];
     }
