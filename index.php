@@ -83,8 +83,9 @@ $migrations = [
         ],
         'type' => 'REGULAR',
         'after' => [
-            [
+            'grade' => [
                 'migration' => $migrations_batch['grade'],
+                'data' => ['template', ['school_schoolId', 'schoolIdToCode']],
                 'relationship' => [
                     'type' => 'internal',
                     'table' => 'assessment_type',
@@ -98,5 +99,5 @@ $migrations = [
 ];
 
 $migration = new Migration();
-    $migration->setMigration($migrations);
+$migration->setMigration($migrations);
 $migration->runMigration();

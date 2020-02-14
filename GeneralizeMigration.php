@@ -30,16 +30,21 @@ class GeneralizeMigration extends CommonMigration {
         $this->buildSchema();
         $this->buildChildSchema();
         $this->buildChildRelationshipSchema();
+        $new_data = [];
 
-        var_dump($data);
-        $query = "SELECT * FROM {$this->table} WHERE {$this->generalizationToString($data)}";
+        foreach ($data as $key => $value) {
+            $new_data[$this->migrations['generalization'][$key]] = $value;
+        }
+
+        $query = "SELECT * FROM {$this->table} WHERE {$this->generalizationToString($new_data)}";
+        var_dump($query);
         return $this->migrate($query);
     }
 
     public function migrate($query) {
         $children = $this->old_db->query($query);
 
-        if ($children) {
+        if ($children and $children->num_rows > 0) {
             $children = $children->fetch_all(1);
             $this->saved_data['children'] = $children;
             $temp_parent = $children[0];
@@ -165,12 +170,8 @@ class GeneralizeMigration extends CommonMigration {
         $db = Db::getInstance('sams_db_old');
         $generalization = implode(", ", $this->migrations['generalization']);
         $query = $db->query("SELECT DISTINCT {$generalization} FROM {$this->table}");
-        $this->saved_data['generalization_values'] = array();
 
-        foreach ($query->fetch_all(1) as $g_type) {
-            $this->saved_data['generalization_values'][] = $g_type;
-        }
-
+        $this->saved_data['generalization_values'] = $query->fetch_all(1);
         $this->saved_data['generalization_query'] = "SELECT * FROM {$this->table} WHERE {VALUE}";
     }
 

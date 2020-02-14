@@ -29,13 +29,8 @@ class CommonMigration{
         return null;
     }
 
-    public function getColumns($columns) {
-        $columns_string = implode(', ', $columns);
-        return "($columns_string)";
-    }
-
-    public function getValues($data, $values) {
-        $val = [];
+    protected function getData($data, $values) {
+        $temp_data = [];
 
         foreach ($values as $value) {
 
@@ -44,16 +39,26 @@ class CommonMigration{
                 $temp_val = $value[1]($temp_val);
             } else $temp_val = $data[$value];
 
-            $val[] = $temp_val;
+            $temp_data[] = $temp_val;
         }
 
+        return $temp_data;
+    }
+
+    protected function getColumns($columns) {
+        $columns_string = implode(', ', $columns);
+        return "($columns_string)";
+    }
+
+    protected function getValues($data, $values) {
+        $val = $this->getData($data, $values);
         $val = (array_map([$this, 'stringify'], $val));
         $val_string = implode(', ', $val);
 
         return "($val_string)";
     }
 
-    public function stringify($val) {
+    protected function stringify($val) {
         return ($val == '') ? 'null' : "'".$val."'";
     }
 }
