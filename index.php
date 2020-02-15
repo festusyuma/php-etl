@@ -88,10 +88,7 @@ $migrations = [
                 'data' => ['template', ['school_schoolId', 'schoolIdToCode']],
                 'relationship' => [
                     'type' => 'internal',
-                    'table' => 'assessment_type',
-                    'field' => [
-                        ['id', 'grade_id'],
-                    ],
+                    'field' => ['assessment_type.grade_id', 'id'],
                 ]
             ]
         ]

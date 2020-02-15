@@ -37,7 +37,6 @@ class GeneralizeMigration extends CommonMigration {
         }
 
         $query = "SELECT * FROM {$this->table} WHERE {$this->generalizationToString($new_data)}";
-        var_dump($query);
         return $this->migrate($query);
     }
 

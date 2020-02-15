@@ -29,16 +29,31 @@ class CommonMigration{
         return null;
     }
 
+    protected function migrateAfterRelationship($parent, $child, $relationship) {
+        if ($relationship['type'] == 'internal') {
+            $parent_field = explode('.', $relationship['field'][0], 2);
+            $child_field = $relationship['field'][1];
+
+            $query = "UPDATE {$parent_field[0]} SET {$parent_field[1]} = {$child[$child_field]} WHERE id = {$parent['id']}";
+            $this->new_db->query($query);
+        }
+    }
+
+    private function getVal($data, $value) {
+        if (is_array($value)) {
+            $temp_val = $data[$value[0]];
+            $temp_val = $value[1]($temp_val);
+        } else $temp_val = $data[$value];
+
+        return $temp_val;
+    }
+
     protected function getData($data, $values) {
         $temp_data = [];
 
         foreach ($values as $value) {
 
-            if (is_array($value)) {
-                $temp_val = $data[$value[0]];
-                $temp_val = $value[1]($temp_val);
-            } else $temp_val = $data[$value];
-
+            $temp_val = $this->getVal($data, $value);
             $temp_data[] = $temp_val;
         }
 
