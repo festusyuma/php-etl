@@ -7,8 +7,6 @@ $rooms = $old_db->query("SELECT DISTINCT schoolCode, classCode FROM result ORDER
 $classAssessments = $old_db->query("SELECT DISTINCT school_schoolId, schoolClassCode, examCode FROM schoolclass WHERE examCode IS NOT NULL ORDER BY school_schoolId");
 
 if ($classAssessments) {
-    $classAssessments = $classAssessments->fetch_all(1);
-
     foreach ($classAssessments as $classAssessment) {
         $school = $old_db->query("SELECT * FROM school WHERE schoolId='{$classAssessment['school_schoolId']}'");
         if ($school and $school->num_rows > 0) {
@@ -29,7 +27,7 @@ if ($classAssessments) {
 
                 if ($resultGroups) {
                     foreach ($resultGroups as $resultGroup) {
-                        createAssessment($resultGroup, $templates);
+                        $createdAssessment = createAssessments($resultGroup, $templates, $school['schoolId']);
                     }
                 }
             }
@@ -38,23 +36,17 @@ if ($classAssessments) {
 }
 
 function getTemplates($examCode, $schoolId) {
-    $old_db = Db::getInstance('sams_db_old');
-    $new_db = Db::getInstance('sams_db_new');
+    global $old_db;
     $resultTypes = $old_db->query("SELECT * FROM config WHERE template='{$examCode}' AND school_schoolId={$schoolId}");
 
     if ($resultTypes and $resultTypes->num_rows > 0) {
         $resultTypes = $resultTypes->fetch_assoc();
 
-        $template_one = $new_db->query("SELECT * FROM assessment_type WHERE name='{$resultTypes['resultType1']}' and sid={$resultTypes['school_schoolId']}");
-        $template_two = $new_db->query("SELECT * FROM assessment_type WHERE name='{$resultTypes['resultType2']}' and sid={$resultTypes['school_schoolId']}");
-        $template_three = $new_db->query("SELECT * FROM assessment_type WHERE name='{$resultTypes['resultType3']}' and sid={$resultTypes['school_schoolId']}");
-        $template_four = $new_db->query("SELECT * FROM assessment_type WHERE name='{$resultTypes['resultType4']}' and sid={$resultTypes['school_schoolId']}");
-
         $templates = [
-            $template_one,
-            $template_two,
-            $template_three,
-            $template_four
+            getTemplate($resultTypes, 'resultType1'),
+            getTemplate($resultTypes, 'resultType2'),
+            getTemplate($resultTypes, 'resultType3'),
+            getTemplate($resultTypes, 'resultType4'),
         ];
 
         return $templates;
@@ -63,6 +55,41 @@ function getTemplates($examCode, $schoolId) {
     return false;
 }
 
-function createAssessment($resultGroup, $templates) {
-    var_dump($resultGroup);
+function getTemplate($resultTypes, $resultType) {
+    global $new_db;
+    $template = $new_db->query("SELECT * FROM assessment_type WHERE name='{$resultTypes[$resultType]}' and sid={$resultTypes['school_schoolId']}");
+
+    if ($template && $template->num_rows > 0) {
+        return $template->fetch_assoc();
+    }else return null;
+}
+
+function createAssessments($resultGroup, $templates, $schoolId) {
+    global $new_db;
+    $createdAssessments = [];
+    $session = $new_db->query("SELECT * FROM session WHERE description='{$resultGroup['session']}' AND sid={$schoolId}");
+
+    if ($session && $session->num_rows > 0) {
+        $session = $session->fetch_assoc();
+        $event = $new_db->query("SELECT
+                                            school_event.*
+                                        FROM
+                                            session_events, school_event
+                                        WHERE
+                                            session_events.session_id = {$session['id']}
+                                        AND session_events.events_id = school_event.id
+                                        AND school_event.description = '{$resultGroup['term']}'");
+
+        if ($event && $event->num_rows > 0) {
+            var_dump($event->fetch_assoc());
+        }
+        $values = [];
+
+        foreach ($templates as $template) {
+            if ($template) {
+            } $createdAssessments[] = null;
+        }
+    }
+
+    return $createdAssessments;
 }
