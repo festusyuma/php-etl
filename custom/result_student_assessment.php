@@ -26,6 +26,7 @@ if ($classAssessments) {
 
 
                 if ($resultGroups) {
+                    var_dump("School: {$school['schoolName']}, classCode: {$classAssessment['schoolClassCode']} result groups {$resultGroups->num_rows}");
                     foreach ($resultGroups as $resultGroup) {
                         $createdAssessment = createAssessments($resultGroup, $templates, $school['schoolId']);
                     }
@@ -81,7 +82,7 @@ function createAssessments($resultGroup, $templates, $schoolId) {
                                         AND school_event.description = '{$resultGroup['term']}'");
 
         if ($event && $event->num_rows > 0) {
-            var_dump($event->fetch_assoc());
+            //var_dump($event->fetch_assoc());
         }
         $values = [];
 
