@@ -50,7 +50,7 @@ function getGradeMinScore($id) {
         if ($config['totalMaxScore'] != $configTotal) {
             $percentage = ($grade['minScore']/$config['totalMaxScore']);
             $newScore = $configTotal * $percentage;
-            return $newScore == 0 ? '0' : $newScore;
+            return $newScore == 0 ? '0' : roundDown($newScore);
         }else return $grade['minScore'] ? $grade['minScore'] : '0';
     }
 
@@ -69,7 +69,7 @@ function getGradeMaxScore($id) {
             if ($config['totalMaxScore'] != $configTotal) {
                 $percentage = ($grade['maxScore']/$config['totalMaxScore']);
                 $newScore = $configTotal * $percentage;
-                return $newScore == 0 ? '0' : $newScore;
+                return $newScore == 0 ? '0' : roundDown($newScore);
             }else return ($grade['maxScore']) ? $grade['maxScore'] : '0';
         }
     }
@@ -124,4 +124,8 @@ function getConfigTotalScoreValue($config) {
     }
 
     return $totalScore;
+}
+
+function roundDown($number) {
+    return floor($number * 100) / 100;
 }
