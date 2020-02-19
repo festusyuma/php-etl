@@ -57,8 +57,8 @@ $migrations_batch = [
             'migrations' => [
                 ['gradeType', 'name'],
                 ['gradeRemark', 'remarks'],
-                ['minScore', 'min_score'],
-                ['maxScore', 'max_score'],
+                [['id', 'getGradeMinScore'], 'min_score'],
+                [['id', 'getGradeMaxScore'], 'max_score'],
                 [['schoolCode', 'schoolCodeToId'], 'sid'],
             ],
             'relationship' => [
@@ -79,7 +79,7 @@ $migrations = [
         'migrations' => [
             ['school_schoolId', 'sid'],
             ['template', 'name'],
-            ['totalMaxScore', 'total_score'],
+            [['id', 'getConfigTotalScore'], 'total_score'],
         ],
         'type' => 'REGULAR',
         'after' => [

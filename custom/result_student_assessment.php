@@ -22,13 +22,13 @@ if ($classAssessments) {
                                                         AND
                                                             schoolCode='{$school['schoolCode']}'
                                                         AND
-                                                            room != 'NULL'");
+                                                            room IS NOT NULL");
 
 
                 if ($resultGroups) {
-                    var_dump("School: {$school['schoolName']}, classCode: {$classAssessment['schoolClassCode']} result groups {$resultGroups->num_rows}");
                     foreach ($resultGroups as $resultGroup) {
-                        $createdAssessment = createAssessments($resultGroup, $templates, $school['schoolId']);
+                        $assessmentData = getAssessmentData($resultGroup, $school['schoolId'], $classAssessment['schoolClassCode']);
+                        var_dump($assessmentData);
                     }
                 }
             }
@@ -65,9 +65,8 @@ function getTemplate($resultTypes, $resultType) {
     }else return null;
 }
 
-function createAssessments($resultGroup, $templates, $schoolId) {
+function getAssessmentData($resultGroup, $schoolId, $classCode) {
     global $new_db;
-    $createdAssessments = [];
     $session = $new_db->query("SELECT * FROM session WHERE description='{$resultGroup['session']}' AND sid={$schoolId}");
 
     if ($session && $session->num_rows > 0) {
@@ -82,15 +81,39 @@ function createAssessments($resultGroup, $templates, $schoolId) {
                                         AND school_event.description = '{$resultGroup['term']}'");
 
         if ($event && $event->num_rows > 0) {
-            //var_dump($event->fetch_assoc());
-        }
-        $values = [];
+            $event = $event->fetch_assoc();
+            $level = $new_db->query("SELECT * FROM level WHERE name='{$classCode}' AND sid={$schoolId}");
 
-        foreach ($templates as $template) {
-            if ($template) {
-            } $createdAssessments[] = null;
+            if ($level and $level->num_rows > 0) {
+                $level = $level->fetch_assoc();
+
+                $class = $new_db->query("SELECT * FROM class WHERE name='{$resultGroup['room']}' AND level_id={$level['id']} AND sid={$schoolId}");
+
+                if ($class and  $class->num_rows > 0) {
+                    $class = $class->fetch_assoc();
+                    $subject = $new_db->query("SELECT * FROM subject WHERE code='{$resultGroup['subject']}' AND sid={$schoolId}");
+
+                    if ($subject and $subject->num_rows > 0) {
+                        $subject = $subject->fetch_assoc();
+
+                        return [
+                            'class' => $class,
+                            'subject' => $subject,
+                            'event' => $event
+                        ];
+                    }
+                }
+            }
         }
     }
 
-    return $createdAssessments;
+    return false;
+}
+
+function createAssessments() {
+
+}
+
+function mapStudentAssessment() {
+
 }
