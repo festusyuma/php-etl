@@ -103,7 +103,7 @@ function getAssessmentData($resultGroup, $schoolId, $classCode) {
             if ($level and $level->num_rows > 0) {
                 $level = $level->fetch_assoc();
 
-                $class = $new_db->query("SELECT * FROM class WHERE name='{$resultGroup['room']}' AND level_id={$level['id']} AND sid={$schoolId}");
+                $class = $new_db->query("SELECT * FROM class WHERE name='{$resultGroup['room']}' AND level_id={$level['id']} AND sid={$schoolId} AND start_date='{$session['start_date']}' AND end_date='{$session['end_date']}'");
 
                 if ($class and  $class->num_rows > 0) {
                     $class = $class->fetch_assoc();
