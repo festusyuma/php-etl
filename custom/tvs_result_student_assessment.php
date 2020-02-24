@@ -3,8 +3,7 @@ require_once ('../Db.php');
 
 $old_db = Db::getInstance('sams_db_old');
 $new_db = Db::getInstance('sams_db_new');
-$rooms = $old_db->query("SELECT DISTINCT schoolCode, classCode FROM result ORDER BY schoolCode");
-$classAssessments = $old_db->query("SELECT DISTINCT school_schoolId, schoolClassCode, examCode FROM schoolclass WHERE examCode IS NOT NULL ORDER BY school_schoolId");
+$classAssessments = $old_db->query("SELECT DISTINCT school_schoolId, schoolClassCode, examCode FROM schoolclass WHERE examCode IS NOT NULL AND school_schoolId=7 ORDER BY school_schoolId");
 $resultTypesCol = ['resulttype1', 'resulttype2', 'resulttype3', 'resulttype4'];
 
 if ($classAssessments) {
@@ -39,7 +38,10 @@ if ($classAssessments) {
                                     $assessment = createAssessment($assessmentData, $template);
                                     if ($assessment) {
                                         foreach ($studentsAssessments as $studentsAssessment) {
-                                            //todo populate score for assessment
+                                            $createdStudentAssessment = createStudentAssessment($assessment, $studentsAssessment, $resultTypesCol[$index]);
+                                            if ($createdStudentAssessment) {
+                                                $relationshipQuery = $new_db->query("INSERT INTO assessment_student_assessments (assessment_id, student_assessments_id) VALUES ({$assessment['id']}, {$createdStudentAssessment})");
+                                            }
                                         }
                                     }
                                 }
@@ -83,7 +85,7 @@ function getTemplate($resultTypes, $resultType) {
 
 function getAssessmentData($resultGroup, $schoolId, $classCode) {
     global $new_db;
-    $session = $new_db->query("SELECT * FROM session WHERE description='{$resultGroup['session']}' AND sid={$schoolId}");
+    $session = $new_db->query("SELECT * FROM session WHERE description='{$resultGroup['session']}' AND sid={$schoolId} ORDER BY id DESC");
 
     if ($session && $session->num_rows > 0) {
         $session = $session->fetch_assoc();
@@ -149,6 +151,43 @@ function createAssessment($assessmentData, $template) {
     return false;
 }
 
-function mapStudentAssessment() {
+function createStudentAssessment($assessment, $studentAssessment, $resultTypeCol) {
+    global $new_db;
+    $student = $new_db->query("SELECT * FROM student WHERE admission_number='{$studentAssessment['studentid']}'");
 
+    if ($student and $student->num_rows > 0) {
+        $student = $student->fetch_assoc();
+
+        $data = [
+            'sid' => $assessment['sid'],
+            'score' => $studentAssessment[$resultTypeCol],
+            'total_score' => $assessment['total_score'],
+            'event_id' => $assessment['event_id'],
+            'sclass_id' => $assessment['sclass_id'],
+            'student_id' => $student['id'],
+            'subject_id' => $assessment['subject_id'],
+            'type_id' => $assessment['type_id']
+        ];
+
+        $grade_score_id = 'null';
+        $remarks = '';
+
+        $assessmentType = $new_db->query("SELECT * FROM assessment_type WHERE id = {$data['type_id']}");
+        if ($assessmentType and $assessmentType->num_rows > 0) {
+            $assessmentType = $assessmentType->fetch_assoc();
+            $gradeScore = $new_db->query("SELECT grade_score.* FROM grade_grade_scores, grade_score WHERE grade_grade_scores.grade_id = {$assessmentType['grade_id']} AND grade_grade_scores.grade_scores_id = grade_score.id AND  grade_score.min_score < {$data['score']} AND {$data['score']} <= grade_score.max_score");
+            if ($gradeScore and $gradeScore->num_rows > 0) {
+                $grade = $gradeScore->fetch_assoc();
+                $grade_score_id = $grade['id'];
+                $remarks = strtolower($grade['remarks']);
+            }
+        }
+
+        $studentAssessmentQuery = $new_db->query("INSERT INTO student_assessment (sid, score, total_score, event_id, grade_score_id, remarks, sclass_id, student_id, subject_id, type_id) 
+                                                        VALUES ({$data['sid']}, {$data['score']}, {$data['total_score']}, {$data['event_id']}, {$grade_score_id}, '{$remarks}', {$data['sclass_id']}, {$data['student_id']}, {$data['subject_id']}, {$data['type_id']})");
+
+        if ($studentAssessmentQuery) return $new_db->insert_id;
+    }
+
+    return false;
 }
