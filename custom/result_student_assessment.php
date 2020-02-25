@@ -38,11 +38,9 @@ if ($classAssessments) {
                                     $assessment = createAssessment($assessmentData, $template);
                                     if ($assessment) {
                                         foreach ($studentsAssessments as $studentsAssessment) {
-                                            if (is_null($studentsAssessment['template']) || $studentsAssessment['template'] == $template['name']) {
-                                                $createdStudentAssessment = createStudentAssessment($assessment, $studentsAssessment, $resultTypesCol[$index]);
-                                                if ($createdStudentAssessment) {
-                                                    $relationshipQuery = $new_db->query("INSERT INTO assessment_student_assessments (assessment_id, student_assessments_id) VALUES ({$assessment['id']}, {$createdStudentAssessment})");
-                                                }
+                                            $createdStudentAssessment = createStudentAssessment($assessment, $studentsAssessment, $resultTypesCol[$index]);
+                                            if ($createdStudentAssessment) {
+                                                $relationshipQuery = $new_db->query("INSERT INTO assessment_student_assessments (assessment_id, student_assessments_id) VALUES ({$assessment['id']}, {$createdStudentAssessment})");
                                             }
                                         }
                                     }
@@ -185,11 +183,10 @@ function createStudentAssessment($assessment, $studentAssessment, $resultTypeCol
             }
         }
 
-        if (!is_null($studentAssessment['template'])) {
-            $studentAssessmentQuery = $new_db->query("
+        $studentAssessmentQuery = $new_db->query("
                 SELECT * FROM student_assessment
                 WHERE
-                    sid = {$assessment['sid']} AND
+                    sid = {$data['sid']} AND
                     event_id = {$data['event_id']} AND
                     sclass_id = {$data['sclass_id']} AND
                     student_id = {$data['student_id']} AND
@@ -197,9 +194,8 @@ function createStudentAssessment($assessment, $studentAssessment, $resultTypeCol
                     type_id = {$data['type_id']}
             ");
 
-            if ($studentAssessmentQuery and $studentAssessmentQuery->num_rows > 0) {
-                return false;
-            }
+        if ($studentAssessmentQuery and $studentAssessmentQuery->num_rows > 0) {
+            return false;
         }
 
         $studentAssessmentQuery = $new_db->query("INSERT INTO student_assessment (sid, score, total_score, event_id, grade_score_id, remarks, sclass_id, student_id, subject_id, type_id) 
