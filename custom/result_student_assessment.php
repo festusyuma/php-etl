@@ -177,7 +177,7 @@ function createStudentAssessment($assessment, $studentAssessment, $resultTypeCol
         $assessmentType = $new_db->query("SELECT * FROM assessment_type WHERE id = {$data['type_id']}");
         if ($assessmentType and $assessmentType->num_rows > 0) {
             $assessmentType = $assessmentType->fetch_assoc();
-            $gradeScore = $new_db->query("SELECT grade_score.* FROM grade_grade_scores, grade_score WHERE grade_grade_scores.grade_id = {$assessmentType['grade_id']} AND grade_grade_scores.grade_scores_id = grade_score.id AND  grade_score.min_score < {$data['score']} AND {$data['score']} <= grade_score.max_score");
+            $gradeScore = $new_db->query("SELECT grade_score.* FROM grade_grade_scores, grade_score WHERE grade_grade_scores.grade_id = {$assessmentType['grade_id']} AND grade_grade_scores.grade_scores_id = grade_score.id AND  grade_score.min_score <= {$data['score']} AND {$data['score']} <= grade_score.max_score");
             if ($gradeScore and $gradeScore->num_rows > 0) {
                 $grade = $gradeScore->fetch_assoc();
                 $grade_score_id = $grade['id'];

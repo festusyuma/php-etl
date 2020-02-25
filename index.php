@@ -91,10 +91,19 @@ $migrations = [
                     'field' => ['assessment_type.grade_id', 'id'],
                 ]
             ]
-        ]
+        ],
+        'defaults' => [
+            'version' => 0,
+            'appear_in_result' => 1,
+            'allow_multiple' => 0
+        ],
     ],
 ];
 
 $migration = new Migration();
 $migration->setMigration($migrations);
 $migration->runMigration();
+
+require_once ('custom/grade_level.php');
+require_once ('custom/assessment_type_event_type.php');
+//require_once ('custom/result_student_assessment.php');

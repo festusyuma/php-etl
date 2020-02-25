@@ -1,6 +1,4 @@
 <?php
-require_once ('../Db.php');
-
 $new_db = Db::getInstance('sams_db_new');
 $values = [];
 $schools = $new_db->query('SELECT * FROM school');

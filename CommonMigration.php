@@ -61,15 +61,25 @@ class CommonMigration{
     }
 
     protected function getColumns($columns) {
-        $columns_string = implode(', ', $columns);
+        $allColumns = $columns;
+
+        if (isset($this->migrations['defaults'])) {
+            foreach ($this->migrations['defaults'] as $key => $defaultCol) $allColumns[] = $key;
+        }
+
+        $columns_string = implode(', ', $allColumns);
         return "($columns_string)";
     }
 
     protected function getValues($data, $values) {
         $val = $this->getData($data, $values);
         $val = (array_map([$this, 'stringify'], $val));
-        $val_string = implode(', ', $val);
 
+        if (isset($this->migrations['defaults'])) {
+            foreach ($this->migrations['defaults'] as $defaultVal) $val[] = $defaultVal;
+        }
+
+        $val_string = implode(', ', $val);
         return "($val_string)";
     }
 
