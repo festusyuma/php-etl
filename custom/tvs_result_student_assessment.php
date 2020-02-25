@@ -3,7 +3,7 @@ require_once ('../Db.php');
 
 $old_db = Db::getInstance('sams_db_old');
 $new_db = Db::getInstance('sams_db_new');
-$classAssessments = $old_db->query("SELECT DISTINCT school_schoolId, schoolClassCode, examCode FROM schoolclass WHERE examCode IS NOT NULL AND school_schoolId=7 ORDER BY school_schoolId");
+$classAssessments = $old_db->query("SELECT DISTINCT school_schoolId, schoolClassCode, examCode FROM schoolclass WHERE examCode IS NOT NULL ORDER BY school_schoolId");
 $resultTypesCol = ['resulttype1', 'resulttype2', 'resulttype3', 'resulttype4'];
 
 if ($classAssessments) {
@@ -38,9 +38,11 @@ if ($classAssessments) {
                                     $assessment = createAssessment($assessmentData, $template);
                                     if ($assessment) {
                                         foreach ($studentsAssessments as $studentsAssessment) {
-                                            $createdStudentAssessment = createStudentAssessment($assessment, $studentsAssessment, $resultTypesCol[$index]);
-                                            if ($createdStudentAssessment) {
-                                                $relationshipQuery = $new_db->query("INSERT INTO assessment_student_assessments (assessment_id, student_assessments_id) VALUES ({$assessment['id']}, {$createdStudentAssessment})");
+                                            if (is_null($studentsAssessment['template']) || $studentsAssessment['template'] == $template['name']) {
+                                                $createdStudentAssessment = createStudentAssessment($assessment, $studentsAssessment, $resultTypesCol[$index]);
+                                                if ($createdStudentAssessment) {
+                                                    $relationshipQuery = $new_db->query("INSERT INTO assessment_student_assessments (assessment_id, student_assessments_id) VALUES ({$assessment['id']}, {$createdStudentAssessment})");
+                                                }
                                             }
                                         }
                                     }
@@ -79,7 +81,7 @@ function getTemplate($resultTypes, $resultType) {
     $template = $new_db->query("SELECT * FROM assessment_type WHERE name='{$resultTypes[$resultType]}' and sid={$resultTypes['school_schoolId']}");
 
     if ($template && $template->num_rows > 0) {
-        return $template->fetch_assoc();
+        return $template->fetch_assoc( );
     }else return null;
 }
 
@@ -180,6 +182,23 @@ function createStudentAssessment($assessment, $studentAssessment, $resultTypeCol
                 $grade = $gradeScore->fetch_assoc();
                 $grade_score_id = $grade['id'];
                 $remarks = strtolower($grade['remarks']);
+            }
+        }
+
+        if (!is_null($studentAssessment['template'])) {
+            $studentAssessmentQuery = $new_db->query("
+                SELECT * FROM student_assessment
+                WHERE
+                    sid = {$assessment['sid']} AND
+                    event_id = {$data['event_id']} AND
+                    sclass_id = {$data['sclass_id']} AND
+                    student_id = {$data['student_id']} AND
+                    subject_id = {$data['subject_id']} AND
+                    type_id = {$data['type_id']}
+            ");
+
+            if ($studentAssessmentQuery and $studentAssessmentQuery->num_rows > 0) {
+                return false;
             }
         }
 
