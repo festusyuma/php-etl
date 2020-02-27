@@ -70,6 +70,9 @@ $migrations_batch = [
                 ],
             ]
         ],
+        'defaults' => [
+            'version' => 0,
+        ],
     ],
 ];
 

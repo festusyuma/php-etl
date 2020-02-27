@@ -140,7 +140,7 @@ function createAssessment($assessmentData, $template) {
     $subject_id = $assessmentData['subject']['id'];
     $type_id = $template['id'];
 
-    $assessment = $new_db->query("INSERT INTO assessment (sid, name, total_score, event_id, sclass_id, subject_id, type_id) VALUES ({$sid}, '{$name}', {$total_score}, {$event_id}, {$class_id}, {$subject_id}, {$type_id})");
+    $assessment = $new_db->query("INSERT INTO assessment (sid, name, total_score, event_id, sclass_id, subject_id, type_id, version) VALUES ({$sid}, '{$name}', {$total_score}, {$event_id}, {$class_id}, {$subject_id}, {$type_id}, 0)");
 
     if ($assessment) {
         $id = $new_db->insert_id;
@@ -198,8 +198,8 @@ function createStudentAssessment($assessment, $studentAssessment, $resultTypeCol
             return false;
         }
 
-        $studentAssessmentQuery = $new_db->query("INSERT INTO student_assessment (sid, score, total_score, event_id, grade_score_id, remarks, sclass_id, student_id, subject_id, type_id) 
-                                                        VALUES ({$data['sid']}, {$data['score']}, {$data['total_score']}, {$data['event_id']}, {$grade_score_id}, '{$remarks}', {$data['sclass_id']}, {$data['student_id']}, {$data['subject_id']}, {$data['type_id']})");
+        $studentAssessmentQuery = $new_db->query("INSERT INTO student_assessment (sid, score, total_score, event_id, grade_score_id, remarks, sclass_id, student_id, subject_id, type_id, version) 
+                                                        VALUES ({$data['sid']}, {$data['score']}, {$data['total_score']}, {$data['event_id']}, {$grade_score_id}, '{$remarks}', {$data['sclass_id']}, {$data['student_id']}, {$data['subject_id']}, {$data['type_id']}, 0)");
 
         if ($studentAssessmentQuery) return $new_db->insert_id;
     }
