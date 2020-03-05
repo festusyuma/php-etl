@@ -22,6 +22,9 @@ if ($schools) {
                     if ($level and $level->num_rows > 0) {
                         $level = $level->fetch_assoc();
                         $class = $new_db->query("SELECT * FROM class WHERE name='{$classGroup['room']}' AND level_id={$level['id']} AND sid={$schoolId} AND start_date='{$session['start_date']}' AND end_date='{$session['end_date']}'");
+                        //todo replace class fetch with class creation
+                        //todo get last insert id ($db->insert_id) and fetch the new class created
+                        //todo continue with code to add students to class created
 
                         if ($class and $class->num_rows > 0) {
                             $class = $class->fetch_assoc();
