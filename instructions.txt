@@ -1,4 +1,5 @@
 1. Add to local server folder or create virtual host
+3. Access {url}/custom/student_class_migration.php to migrate student assessment
 2. Access {url} either www/sams-etl or virtual host name (assessment type and grade will be migrated)
 3. Access {url}/custom/result_student_assessment.php to migrate student assessment
 4. Congratulations
