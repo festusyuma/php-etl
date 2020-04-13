@@ -1,8 +1,8 @@
 <?php
 require_once ('../Db.php');
 
-$old_db = Db::getInstance('sams_db_old');
-$new_db = Db::getInstance('sams_db_new');
+$old_db = Db::getInstance('school_management');
+$new_db = Db::getInstance('school_management_new');
 $classAssessments = $old_db->query("SELECT DISTINCT school_schoolId, schoolClassCode, examCode FROM schoolclass WHERE examCode IS NOT NULL ORDER BY school_schoolId");
 $resultTypesCol = ['resulttype1', 'resulttype2', 'resulttype3', 'resulttype4'];
 

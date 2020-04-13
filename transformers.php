@@ -2,7 +2,7 @@
 require_once ('Db.php');
 
 function schoolIdToCode($id) {
-    $db = Db::getInstance('sams_db_old');
+    $db = Db::getInstance('school_management');
     $school = $db->query("SELECT * FROM school WHERE schoolId=$id");
 
     if ($school) {
@@ -13,7 +13,7 @@ function schoolIdToCode($id) {
 }
 
 function schoolCodeToId($schoolCode) {
-    $db = Db::getInstance('sams_db_old');
+    $db = Db::getInstance('school_management');
     $school = $db->query("SELECT * FROM school WHERE schoolCode='{$schoolCode}'");
 
     if ($school) {
@@ -28,7 +28,7 @@ function formatGradeName($str) {
 }
 
 function getConfigTotalScore($id) {
-    $db = Db::getInstance('sams_db_old');
+    $db = Db::getInstance('school_management');
     $config = $db->query("SELECT * FROM config WHERE id={$id}");
 
     if ($config and $config->num_rows > 0) {
@@ -78,7 +78,7 @@ function getGradeMaxScore($id) {
 }
 
 function getGradeConfigDetails($id) {
-    $db = Db::getInstance('sams_db_old');
+    $db = Db::getInstance('school_management');
 
     $grade = $db->query("SELECT * FROM grade WHERE id={$id}");
 

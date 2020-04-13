@@ -1,8 +1,8 @@
 <?php
 require_once ('../Db.php');
 
-$old_db = Db::getInstance('sams_db_old');
-$new_db = Db::getInstance('sams_db_new');
+$old_db = Db::getInstance('school_management');
+$new_db = Db::getInstance('school_management_new');
 
 $schools = $old_db->query("SELECT * FROM school");
 

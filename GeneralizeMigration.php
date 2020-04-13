@@ -166,7 +166,7 @@ class GeneralizeMigration extends CommonMigration {
     }
 
     private function getGeneralizationValues() {
-        $db = Db::getInstance('sams_db_old');
+        $db = Db::getInstance('school_management');
         $generalization = implode(", ", $this->migrations['generalization']);
         $query = $db->query("SELECT DISTINCT {$generalization} FROM {$this->table}");
 

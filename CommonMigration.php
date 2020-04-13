@@ -12,8 +12,8 @@ class CommonMigration{
     public function __construct($table, $migrations){
         $this->migrations = $migrations;
         $this->table = $table;
-        $this->old_db = Db::getInstance('sams_db_old');
-        $this->new_db = Db::getInstance('sams_db_new');
+        $this->old_db = Db::getInstance('school_management');
+        $this->new_db = Db::getInstance('school_management_new');
     }
 
     protected function migrateAfter($table, $migration, $data) {

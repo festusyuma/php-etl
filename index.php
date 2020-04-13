@@ -16,8 +16,8 @@ class Migration {
     private $values;
 
     public function __construct(){
-        $this->old_db = Db::getInstance('sams_db_old');
-        $this->new_db = Db::getInstance('sams_db_new');
+        $this->old_db = Db::getInstance('school_management');
+        $this->new_db = Db::getInstance('school_management_new');
         $this->queries = $this->columns = $this->values = array();
     }
 

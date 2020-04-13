@@ -1,5 +1,5 @@
 <?php
-$new_db = Db::getInstance('sams_db_new');
+$new_db = Db::getInstance('school_management_new');
 $values = [];
 $assessments = $new_db->query("SELECT * FROM assessment_type");
 
