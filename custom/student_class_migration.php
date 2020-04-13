@@ -3,7 +3,6 @@ require_once ('../Db.php');
 
 $old_db = Db::getInstance('school_management');
 $new_db = Db::getInstance('school_management_new');
-
 $schools = $old_db->query("SELECT * FROM school");
 
 if ($schools) {
